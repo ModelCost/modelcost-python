@@ -1,0 +1,5 @@
+{
+  "error": "invalid_api_key",
+  "message": "The provided API key is invalid or has been revoked.",
+  "status": 401
+}

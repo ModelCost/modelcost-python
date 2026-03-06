@@ -1,0 +1,6 @@
+{
+  "allowed": false,
+  "action": "block",
+  "throttle_percentage": null,
+  "reason": "Monthly budget exceeded for feature 'chatbot'. Current spend: $10,240.00 / $10,000.00 (102.4%)"
+}

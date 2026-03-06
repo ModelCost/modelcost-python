@@ -1,0 +1,15 @@
+{
+  "api_key": "mc_test_abc123def456ghi789jkl012mno345pqr678stu901vwx",
+  "timestamp": "2026-02-16T12:00:00Z",
+  "provider": "openai",
+  "model": "gpt-4o",
+  "feature": "chatbot",
+  "customer_id": "cust_123",
+  "input_tokens": 150,
+  "output_tokens": 50,
+  "latency_ms": 320,
+  "metadata": {
+    "session_id": "sess_abc",
+    "user_id": "usr_456"
+  }
+}

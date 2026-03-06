@@ -1,0 +1,25 @@
+{
+  "policies": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Monthly Org Budget",
+      "scope": "organization",
+      "scope_identifier": null,
+      "budget_amount_usd": 10000.00,
+      "period": "monthly",
+      "custom_period_days": null,
+      "action": "block",
+      "throttle_percentage": null,
+      "alert_thresholds": [50, 80, 100],
+      "current_spend_usd": 7234.50,
+      "spend_percentage": 72.35,
+      "period_start": "2026-02-01T00:00:00Z",
+      "is_active": true,
+      "created_at": "2026-01-15T10:00:00Z",
+      "updated_at": "2026-02-16T12:00:00Z"
+    }
+  ],
+  "total_budget_usd": 10000.00,
+  "total_spend_usd": 7234.50,
+  "policies_at_risk": 0
+}

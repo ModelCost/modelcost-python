@@ -1,0 +1,21 @@
+{
+  "is_allowed": false,
+  "action": "block",
+  "violations": [
+    {
+      "type": "pii",
+      "subtype": "ssn",
+      "severity": "high",
+      "start": 42,
+      "end": 53
+    },
+    {
+      "type": "pii",
+      "subtype": "email",
+      "severity": "medium",
+      "start": 78,
+      "end": 98
+    }
+  ],
+  "redacted_text": "Please process the application for SSN ***-**-**** and contact them at ********************"
+}
