@@ -129,6 +129,7 @@ class _GoogleModelProxy:
 
         if self._config is not None and self._config.content_privacy:
             # Metadata-only mode: full local classification, never send raw content
+            assert self._pii_scanner is not None
             full_result = self._pii_scanner.full_scan(content)
             if full_result.detected:
                 from datetime import datetime, timezone
@@ -175,7 +176,7 @@ class _GoogleModelProxy:
                              "start": v.start, "end": v.end}
                             for v in gov_result.violations
                         ],
-                        redacted_text=gov_result.redacted_text or self._pii_scanner.redact(content),
+                        redacted_text=gov_result.redacted_text or (self._pii_scanner.redact(content) if self._pii_scanner else content),
                     )
 
     def __getattr__(self, name: str) -> Any:

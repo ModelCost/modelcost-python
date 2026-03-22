@@ -13,6 +13,7 @@ from modelcost.models.track import TrackRequest, TrackResponse
 
 if TYPE_CHECKING:
     from modelcost.client import ModelCostClient
+    from modelcost.models.cost import ModelPricing
     from modelcost.session import SessionContext
 
 logger = logging.getLogger("modelcost")
@@ -25,7 +26,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 # periodically by the background sync timer.
 # ---------------------------------------------------------------------------
 
-MODEL_PRICING: dict = {}
+MODEL_PRICING: dict[str, ModelPricing] = {}
 
 
 def sync_pricing_from_api(client: ModelCostClient) -> None:
