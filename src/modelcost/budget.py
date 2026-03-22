@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from modelcost.models.budget import BudgetCheckResponse, BudgetStatusResponse
 
@@ -41,8 +41,8 @@ class BudgetManager:
     def check(
         self,
         client: ModelCostClient,
-        feature: Optional[str] = None,
-        estimated_cost: Optional[float] = None,
+        feature: str | None = None,
+        estimated_cost: float | None = None,
     ) -> BudgetCheckResponse:
         """Check the local cache and return whether the request is allowed.
 
@@ -88,7 +88,7 @@ class BudgetManager:
         with self._lock:
             self._sync_locked(client)
 
-    def update_local_spend(self, feature: Optional[str], cost: float) -> None:
+    def update_local_spend(self, feature: str | None, cost: float) -> None:
         """Optimistically add *cost* to the local cached spend."""
         with self._lock:
             scope_key = feature or "__org__"

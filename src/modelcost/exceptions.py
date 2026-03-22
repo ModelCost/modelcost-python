@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ModelCostError(Exception):
@@ -27,7 +27,7 @@ class BudgetExceededError(ModelCostError):
         message: str,
         remaining_budget: float,
         scope: str,
-        override_url: Optional[str] = None,
+        override_url: str | None = None,
     ) -> None:
         self.remaining_budget = remaining_budget
         self.scope = scope
@@ -55,7 +55,7 @@ class PiiDetectedError(ModelCostError):
     def __init__(
         self,
         message: str,
-        detected_entities: List[Dict[str, Any]],
+        detected_entities: list[dict[str, Any]],
         redacted_text: str,
     ) -> None:
         self.detected_entities = detected_entities
@@ -85,7 +85,7 @@ class SessionBudgetExceeded(ModelCostError):
         message: str,
         session_id: str,
         current_spend: float,
-        max_spend: Optional[float],
+        max_spend: float | None,
     ) -> None:
         self.session_id = session_id
         self.current_spend = current_spend

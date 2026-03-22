@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -24,7 +24,7 @@ class ModelCostConfig(BaseModel):
     org_id: str
     environment: str = "production"
     base_url: str = "https://api.modelcost.ai"
-    monthly_budget: Optional[float] = None
+    monthly_budget: float | None = None
     budget_action: Literal["alert", "throttle", "block"] = "alert"
     fail_open: bool = True
     flush_interval_seconds: float = 5.0

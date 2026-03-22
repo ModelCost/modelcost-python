@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import time
-from typing import Any, Dict
 from unittest.mock import MagicMock
 
-import pytest
-
 from modelcost.budget import BudgetManager
-from modelcost.models.budget import BudgetCheckResponse, BudgetPolicy, BudgetStatusResponse
+from modelcost.models.budget import BudgetPolicy, BudgetStatusResponse
 
 
 def _make_status(

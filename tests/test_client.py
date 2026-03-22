@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any
 
-import httpx
 import pytest
-import respx
 
 from modelcost.client import ModelCostClient
-from modelcost.config import ModelCostConfig
 from modelcost.exceptions import ModelCostApiError
 from modelcost.models.track import TrackRequest
 
-from datetime import datetime, timezone
+if TYPE_CHECKING:
+    import respx
+
+    from modelcost.config import ModelCostConfig
 
 
 @pytest.fixture()
@@ -28,7 +29,7 @@ class TestTrack:
         self,
         mc_client: ModelCostClient,
         mock_client: respx.MockRouter,
-        track_response_fixture: Dict[str, Any],
+        track_response_fixture: dict[str, Any],
     ) -> None:
         mock_client.post("/v1/track").respond(200, json=track_response_fixture)
 
@@ -51,7 +52,7 @@ class TestBudgetCheck:
         self,
         mc_client: ModelCostClient,
         mock_client: respx.MockRouter,
-        budget_check_allowed_fixture: Dict[str, Any],
+        budget_check_allowed_fixture: dict[str, Any],
     ) -> None:
         mock_client.get("/v1/budget/check").respond(200, json=budget_check_allowed_fixture)
         resp = mc_client.check_budget("org_test_123", feature="chatbot")
@@ -62,7 +63,7 @@ class TestBudgetCheck:
         self,
         mc_client: ModelCostClient,
         mock_client: respx.MockRouter,
-        budget_check_blocked_fixture: Dict[str, Any],
+        budget_check_blocked_fixture: dict[str, Any],
     ) -> None:
         mock_client.get("/v1/budget/check").respond(200, json=budget_check_blocked_fixture)
         resp = mc_client.check_budget("org_test_123", feature="chatbot")

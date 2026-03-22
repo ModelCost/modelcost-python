@@ -6,7 +6,6 @@ import logging
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional
 
 logger = logging.getLogger("modelcost")
 
@@ -17,7 +16,7 @@ class SessionCallRecord:
 
     call_sequence: int
     call_type: str  # "llm" | "tool"
-    tool_name: Optional[str]
+    tool_name: str | None
     input_tokens: int
     output_tokens: int
     cumulative_input_tokens: int
@@ -38,11 +37,11 @@ class SessionContext:
         self,
         *,
         session_id: str,
-        server_session_id: Optional[str],
-        feature: Optional[str],
-        user_id: Optional[str],
-        max_spend_usd: Optional[float],
-        max_iterations: Optional[int],
+        server_session_id: str | None,
+        feature: str | None,
+        user_id: str | None,
+        max_spend_usd: float | None,
+        max_iterations: int | None,
     ) -> None:
         self.session_id = session_id
         self.server_session_id = server_session_id
@@ -57,7 +56,7 @@ class SessionContext:
         self._iteration_count: int = 0
         self._cumulative_input_tokens: int = 0
         self._status: str = "active"
-        self._termination_reason: Optional[str] = None
+        self._termination_reason: str | None = None
         self._calls: list[SessionCallRecord] = []
         self._started_at: datetime = datetime.now(timezone.utc)
 
@@ -79,14 +78,14 @@ class SessionContext:
             return self._status
 
     @property
-    def remaining_budget(self) -> Optional[float]:
+    def remaining_budget(self) -> float | None:
         if self.max_spend_usd is None:
             return None
         with self._lock:
             return self.max_spend_usd - self._current_spend_usd
 
     @property
-    def remaining_iterations(self) -> Optional[int]:
+    def remaining_iterations(self) -> int | None:
         if self.max_iterations is None:
             return None
         with self._lock:
@@ -115,19 +114,18 @@ class SessionContext:
                 )
 
             # Iteration limit check
-            if self.max_iterations is not None:
-                if self._iteration_count >= self.max_iterations:
-                    self._status = "terminated"
-                    self._termination_reason = "iteration_limit"
-                    raise SessionIterationLimitExceeded(
-                        message=(
-                            f"Session '{self.session_id}' reached iteration limit "
-                            f"({self._iteration_count}/{self.max_iterations})"
-                        ),
-                        session_id=self.session_id,
-                        current_iterations=self._iteration_count,
-                        max_iterations=self.max_iterations,
-                    )
+            if self.max_iterations is not None and self._iteration_count >= self.max_iterations:
+                self._status = "terminated"
+                self._termination_reason = "iteration_limit"
+                raise SessionIterationLimitExceeded(
+                    message=(
+                        f"Session '{self.session_id}' reached iteration limit "
+                        f"({self._iteration_count}/{self.max_iterations})"
+                    ),
+                    session_id=self.session_id,
+                    current_iterations=self._iteration_count,
+                    max_iterations=self.max_iterations,
+                )
 
             # Budget limit check
             if self.max_spend_usd is not None:
@@ -151,7 +149,7 @@ class SessionContext:
         self,
         *,
         call_type: str = "llm",
-        tool_name: Optional[str] = None,
+        tool_name: str | None = None,
         input_tokens: int = 0,
         output_tokens: int = 0,
         cost_usd: float = 0.0,

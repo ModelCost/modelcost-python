@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime  # noqa: TC003
 
 from pydantic import BaseModel, Field
 
@@ -16,9 +15,9 @@ class BudgetCheckResponse(BaseModel):
     }
 
     allowed: bool
-    action: Optional[str] = None
-    throttle_percentage: Optional[int] = Field(default=None, alias="throttlePercentage")
-    reason: Optional[str] = None
+    action: str | None = None
+    throttle_percentage: int | None = Field(default=None, alias="throttlePercentage")
+    reason: str | None = None
 
 
 class BudgetPolicy(BaseModel):
@@ -31,13 +30,13 @@ class BudgetPolicy(BaseModel):
     id: str
     name: str
     scope: str
-    scope_identifier: Optional[str] = Field(default=None, alias="scopeIdentifier")
+    scope_identifier: str | None = Field(default=None, alias="scopeIdentifier")
     budget_amount_usd: float = Field(..., alias="budgetAmountUsd")
     period: str
-    custom_period_days: Optional[int] = Field(default=None, alias="customPeriodDays")
+    custom_period_days: int | None = Field(default=None, alias="customPeriodDays")
     action: str
-    throttle_percentage: Optional[int] = Field(default=None, alias="throttlePercentage")
-    alert_thresholds: List[int] = Field(default_factory=list, alias="alertThresholds")
+    throttle_percentage: int | None = Field(default=None, alias="throttlePercentage")
+    alert_thresholds: list[int] = Field(default_factory=list, alias="alertThresholds")
     current_spend_usd: float = Field(..., alias="currentSpendUsd")
     spend_percentage: float = Field(..., alias="spendPercentage")
     period_start: datetime = Field(..., alias="periodStart")
@@ -53,7 +52,7 @@ class BudgetStatusResponse(BaseModel):
         "populate_by_name": True,
     }
 
-    policies: List[BudgetPolicy]
+    policies: list[BudgetPolicy]
     total_budget_usd: float = Field(..., alias="totalBudgetUsd")
     total_spend_usd: float = Field(..., alias="totalSpendUsd")
     policies_at_risk: int = Field(..., alias="policiesAtRisk")

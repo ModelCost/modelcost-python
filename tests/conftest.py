@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
-import httpx
 import pytest
 import respx
 
@@ -45,7 +43,7 @@ def mock_client(config: ModelCostConfig) -> respx.MockRouter:
         yield router
 
 
-def load_fixture(name: str) -> Dict[str, Any]:
+def load_fixture(name: str) -> dict[str, Any]:
     """Load a JSON fixture by file name (without extension)."""
     path = FIXTURES_DIR / f"{name}.json"
     with open(path) as f:
@@ -53,40 +51,40 @@ def load_fixture(name: str) -> Dict[str, Any]:
 
 
 @pytest.fixture()
-def track_request_fixture() -> Dict[str, Any]:
+def track_request_fixture() -> dict[str, Any]:
     return load_fixture("track_request")
 
 
 @pytest.fixture()
-def track_response_fixture() -> Dict[str, Any]:
+def track_response_fixture() -> dict[str, Any]:
     return load_fixture("track_response")
 
 
 @pytest.fixture()
-def budget_check_allowed_fixture() -> Dict[str, Any]:
+def budget_check_allowed_fixture() -> dict[str, Any]:
     return load_fixture("budget_check_allowed")
 
 
 @pytest.fixture()
-def budget_check_blocked_fixture() -> Dict[str, Any]:
+def budget_check_blocked_fixture() -> dict[str, Any]:
     return load_fixture("budget_check_blocked")
 
 
 @pytest.fixture()
-def budget_status_fixture() -> Dict[str, Any]:
+def budget_status_fixture() -> dict[str, Any]:
     return load_fixture("budget_status")
 
 
 @pytest.fixture()
-def governance_scan_clean_fixture() -> Dict[str, Any]:
+def governance_scan_clean_fixture() -> dict[str, Any]:
     return load_fixture("governance_scan_clean")
 
 
 @pytest.fixture()
-def governance_scan_pii_fixture() -> Dict[str, Any]:
+def governance_scan_pii_fixture() -> dict[str, Any]:
     return load_fixture("governance_scan_pii")
 
 
 @pytest.fixture()
-def error_response_fixture() -> Dict[str, Any]:
+def error_response_fixture() -> dict[str, Any]:
     return load_fixture("error_response")

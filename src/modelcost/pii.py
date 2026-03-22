@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 
 @dataclass
@@ -17,7 +17,7 @@ class PiiResult:
     """Result of a PII scan."""
 
     detected: bool
-    entities: List[Dict[str, Any]] = field(default_factory=list)
+    entities: list[dict[str, Any]] = field(default_factory=list)
     redacted_text: str = ""
 
 
@@ -37,8 +37,8 @@ class FullScanResult:
     """Result of a full governance scan across all categories."""
 
     detected: bool
-    violations: List[GovernanceViolation] = field(default_factory=list)
-    categories: List[str] = field(default_factory=list)
+    violations: list[GovernanceViolation] = field(default_factory=list)
+    categories: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ class PiiScanner:
     def full_scan(
         self,
         text: str,
-        categories: Optional[List[str]] = None,
+        categories: list[str] | None = None,
     ) -> FullScanResult:
         """Full governance scan across multiple categories.
 

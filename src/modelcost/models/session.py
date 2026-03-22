@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime  # noqa: TC003
 
 from pydantic import BaseModel, Field
 
@@ -15,10 +14,10 @@ class CreateSessionRequest(BaseModel):
 
     api_key: str = Field(..., alias="apiKey")
     session_id: str = Field(..., alias="sessionId")
-    feature: Optional[str] = None
-    user_id: Optional[str] = Field(default=None, alias="userId")
-    max_spend_usd: Optional[float] = Field(default=None, alias="maxSpendUsd")
-    max_iterations: Optional[int] = Field(default=None, alias="maxIterations")
+    feature: str | None = None
+    user_id: str | None = Field(default=None, alias="userId")
+    max_spend_usd: float | None = Field(default=None, alias="maxSpendUsd")
+    max_iterations: int | None = Field(default=None, alias="maxIterations")
 
 
 class CreateSessionResponse(BaseModel):
@@ -29,8 +28,8 @@ class CreateSessionResponse(BaseModel):
     id: str
     session_id: str = Field(..., alias="sessionId")
     status: str
-    max_spend_usd: Optional[float] = Field(default=None, alias="maxSpendUsd")
-    max_iterations: Optional[int] = Field(default=None, alias="maxIterations")
+    max_spend_usd: float | None = Field(default=None, alias="maxSpendUsd")
+    max_iterations: int | None = Field(default=None, alias="maxIterations")
 
 
 class RecordSessionCallRequest(BaseModel):
@@ -41,7 +40,7 @@ class RecordSessionCallRequest(BaseModel):
     api_key: str = Field(..., alias="apiKey")
     call_sequence: int = Field(..., alias="callSequence")
     call_type: str = Field(..., alias="callType")
-    tool_name: Optional[str] = Field(default=None, alias="toolName")
+    tool_name: str | None = Field(default=None, alias="toolName")
     input_tokens: int = Field(default=0, alias="inputTokens")
     output_tokens: int = Field(default=0, alias="outputTokens")
     cumulative_input_tokens: int = Field(default=0, alias="cumulativeInputTokens")
@@ -57,7 +56,7 @@ class CloseSessionRequest(BaseModel):
 
     api_key: str = Field(..., alias="apiKey")
     status: str
-    termination_reason: Optional[str] = Field(default=None, alias="terminationReason")
+    termination_reason: str | None = Field(default=None, alias="terminationReason")
     final_spend_usd: float = Field(..., alias="finalSpendUsd")
     final_iteration_count: int = Field(..., alias="finalIterationCount")
 
@@ -69,7 +68,7 @@ class SessionCallSummary(BaseModel):
 
     call_sequence: int = Field(..., alias="callSequence")
     call_type: str = Field(..., alias="callType")
-    tool_name: Optional[str] = Field(default=None, alias="toolName")
+    tool_name: str | None = Field(default=None, alias="toolName")
     input_tokens: int = Field(..., alias="inputTokens")
     output_tokens: int = Field(..., alias="outputTokens")
     cost_usd: float = Field(..., alias="costUsd")
@@ -85,14 +84,14 @@ class SessionSummaryResponse(BaseModel):
 
     id: str
     session_id: str = Field(..., alias="sessionId")
-    feature: Optional[str] = None
-    user_id: Optional[str] = Field(default=None, alias="userId")
-    max_spend_usd: Optional[float] = Field(default=None, alias="maxSpendUsd")
-    max_iterations: Optional[int] = Field(default=None, alias="maxIterations")
+    feature: str | None = None
+    user_id: str | None = Field(default=None, alias="userId")
+    max_spend_usd: float | None = Field(default=None, alias="maxSpendUsd")
+    max_iterations: int | None = Field(default=None, alias="maxIterations")
     current_spend_usd: float = Field(..., alias="currentSpendUsd")
     iteration_count: int = Field(..., alias="iterationCount")
     status: str
-    termination_reason: Optional[str] = Field(default=None, alias="terminationReason")
+    termination_reason: str | None = Field(default=None, alias="terminationReason")
     started_at: datetime = Field(..., alias="startedAt")
-    ended_at: Optional[datetime] = Field(default=None, alias="endedAt")
-    calls: List[SessionCallSummary] = Field(default_factory=list)
+    ended_at: datetime | None = Field(default=None, alias="endedAt")
+    calls: list[SessionCallSummary] = Field(default_factory=list)

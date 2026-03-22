@@ -72,6 +72,5 @@ class TestModelCostConfigFromEnv:
         assert cfg.org_id == "org_env"
 
     def test_from_env_missing_required_raises(self) -> None:
-        with mock.patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValidationError):
-                ModelCostConfig.from_env()
+        with mock.patch.dict(os.environ, {}, clear=True), pytest.raises(ValidationError):
+            ModelCostConfig.from_env()
