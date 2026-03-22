@@ -16,19 +16,19 @@ import logging
 import threading
 import uuid as _uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from modelcost._version import __version__
 from modelcost.budget import BudgetManager
 from modelcost.client import ModelCostClient
 from modelcost.config import ModelCostConfig
 from modelcost.exceptions import ConfigurationError
-from modelcost.models.budget import BudgetCheckResponse, BudgetStatusResponse
 from modelcost.models.session import (
     CloseSessionRequest,
     CreateSessionRequest,
     RecordSessionCallRequest,
 )
+from modelcost.models.track import TrackRequest
 from modelcost.pii import PiiResult, PiiScanner
 from modelcost.providers.anthropic import AnthropicProvider
 from modelcost.providers.google import GoogleProvider
@@ -36,7 +36,9 @@ from modelcost.providers.openai import OpenAIProvider
 from modelcost.rate_limiter import TokenBucketRateLimiter
 from modelcost.session import SessionCallRecord, SessionContext
 from modelcost.tracking import CostTracker, sync_pricing_from_api
-from modelcost.models.track import TrackRequest
+
+if TYPE_CHECKING:
+    from modelcost.models.budget import BudgetCheckResponse, BudgetStatusResponse
 
 logger = logging.getLogger("modelcost")
 
@@ -85,12 +87,12 @@ class _ModelCostSDK:
         self.rate_limiter = TokenBucketRateLimiter(rate=10.0, burst=20)
 
         # Background flush timer
-        self._flush_timer: Optional[threading.Timer] = None
+        self._flush_timer: threading.Timer | None = None
         self._stopped = False
         self._start_flush_timer()
 
         # Background pricing sync timer (5 min interval)
-        self._pricing_timer: Optional[threading.Timer] = None
+        self._pricing_timer: threading.Timer | None = None
         self._start_pricing_sync_timer()
 
     def _start_flush_timer(self) -> None:
@@ -143,7 +145,7 @@ class _ModelCostSDK:
         self.client.close()
 
 
-_instance: Optional[_ModelCostSDK] = None
+_instance: _ModelCostSDK | None = None
 _init_lock = threading.Lock()
 
 
@@ -159,11 +161,11 @@ def _get_instance() -> _ModelCostSDK:
 
 def init(
     *,
-    api_key: Optional[str] = None,
-    org_id: Optional[str] = None,
+    api_key: str | None = None,
+    org_id: str | None = None,
     environment: str = "production",
     base_url: str = "https://api.modelcost.ai",
-    monthly_budget: Optional[float] = None,
+    monthly_budget: float | None = None,
     budget_action: str = "alert",
     fail_open: bool = True,
     flush_interval_seconds: float = 5.0,
@@ -211,7 +213,7 @@ def init(
     logger.info("ModelCost SDK initialised (org=%s, env=%s)", config.org_id, config.environment)
 
 
-def wrap(client: Any, *, feature: Optional[str] = None, session: Optional[SessionContext] = None) -> Any:
+def wrap(client: Any, *, feature: str | None = None, session: SessionContext | None = None) -> Any:
     """Wrap a provider client for automatic cost tracking.
 
     Supports OpenAI, Anthropic, and Google Generative AI clients.
@@ -277,11 +279,11 @@ def track_cost(
     model: str,
     input_tokens: int,
     output_tokens: int,
-    feature: Optional[str] = None,
-    customer_id: Optional[str] = None,
-    latency_ms: Optional[int] = None,
-    metadata: Optional[dict[str, Any]] = None,
-    session: Optional[SessionContext] = None,
+    feature: str | None = None,
+    customer_id: str | None = None,
+    latency_ms: int | None = None,
+    metadata: dict[str, Any] | None = None,
+    session: SessionContext | None = None,
 ) -> None:
     """Manually record a cost event, optionally within a session."""
     sdk = _get_instance()
@@ -319,11 +321,11 @@ def track_cost(
 
 def start_session(
     *,
-    feature: Optional[str] = None,
-    max_spend_usd: Optional[float] = None,
-    max_iterations: Optional[int] = None,
-    user_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    feature: str | None = None,
+    max_spend_usd: float | None = None,
+    max_iterations: int | None = None,
+    user_id: str | None = None,
+    session_id: str | None = None,
 ) -> SessionContext:
     """Start a new agent session with optional spend/iteration limits.
 
@@ -334,7 +336,7 @@ def start_session(
     sid = session_id or str(_uuid.uuid4())
 
     # Create server-side record (fail-open: if unreachable, continue local-only)
-    server_id: Optional[str] = None
+    server_id: str | None = None
     try:
         resp = sdk.client.create_session(CreateSessionRequest(
             api_key=sdk.config.api_key,
@@ -393,8 +395,8 @@ def close_session(session: SessionContext, *, reason: str = "completed") -> None
 
 def check_budget(
     *,
-    feature: Optional[str] = None,
-    estimated_cost: Optional[float] = None,
+    feature: str | None = None,
+    estimated_cost: float | None = None,
 ) -> BudgetCheckResponse:
     """Check whether the current budget allows the planned request."""
     sdk = _get_instance()

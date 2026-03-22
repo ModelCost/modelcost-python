@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import httpx
 
 from modelcost._version import __version__
-from modelcost.config import ModelCostConfig
 from modelcost.exceptions import ModelCostApiError
 from modelcost.models.budget import BudgetCheckResponse, BudgetStatusResponse
 from modelcost.models.governance import GovernanceScanRequest, GovernanceScanResponse
 from modelcost.models.track import TrackRequest, TrackResponse
+
+if TYPE_CHECKING:
+    from modelcost.config import ModelCostConfig
 
 logger = logging.getLogger("modelcost")
 
@@ -78,8 +80,8 @@ class AsyncModelCostClient:
         method: str,
         path: str,
         *,
-        json: Optional[dict] = None,  # type: ignore[type-arg]
-        params: Optional[dict] = None,  # type: ignore[type-arg]
+        json: dict | None = None,  # type: ignore[type-arg]
+        params: dict | None = None,  # type: ignore[type-arg]
     ) -> httpx.Response:
         if self._is_circuit_open():
             raise ModelCostApiError(
@@ -135,8 +137,8 @@ class AsyncModelCostClient:
     async def check_budget(
         self,
         org_id: str,
-        feature: Optional[str] = None,
-        estimated_cost: Optional[float] = None,
+        feature: str | None = None,
+        estimated_cost: float | None = None,
     ) -> BudgetCheckResponse:
         """Check whether a planned request is within budget."""
         params: dict[str, object] = {"org_id": org_id}

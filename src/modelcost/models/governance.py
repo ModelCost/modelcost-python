@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from pydantic import BaseModel, Field
 
 
@@ -16,8 +14,8 @@ class GovernanceScanRequest(BaseModel):
 
     org_id: str = Field(..., alias="orgId")
     text: str
-    feature: Optional[str] = None
-    environment: Optional[str] = None
+    feature: str | None = None
+    environment: str | None = None
 
 
 class DetectedViolation(BaseModel):
@@ -45,10 +43,10 @@ class GovernanceSignalRequest(BaseModel):
     violation_type: str = Field(..., alias="violationType")
     violation_subtype: str = Field(..., alias="violationSubtype")
     severity: str
-    environment: Optional[str] = None
+    environment: str | None = None
     action_taken: str = Field(..., alias="actionTaken")
     was_allowed: bool = Field(..., alias="wasAllowed")
-    detected_at: Optional[str] = Field(default=None, alias="detectedAt")
+    detected_at: str | None = Field(default=None, alias="detectedAt")
     source: str = "metadata_only"
     violation_count: int = Field(default=1, alias="violationCount")
 
@@ -61,6 +59,6 @@ class GovernanceScanResponse(BaseModel):
     }
 
     is_allowed: bool = Field(..., alias="isAllowed")
-    action: Optional[str] = None
-    violations: List[DetectedViolation] = Field(default_factory=list)
-    redacted_text: Optional[str] = Field(default=None, alias="redactedText")
+    action: str | None = None
+    violations: list[DetectedViolation] = Field(default_factory=list)
+    redacted_text: str | None = Field(default=None, alias="redactedText")

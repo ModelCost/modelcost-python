@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 
 from modelcost.client import ModelCostClient
-from modelcost.config import ModelCostConfig
 from modelcost.providers.openai import OpenAIProvider
 from modelcost.tracking import CostTracker
+
+if TYPE_CHECKING:
+    from modelcost.config import ModelCostConfig
 
 
 @pytest.fixture()

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Dict, Optional
+from datetime import datetime  # noqa: TC003
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -19,12 +19,12 @@ class TrackRequest(BaseModel):
     timestamp: datetime
     provider: str
     model: str
-    feature: Optional[str] = None
-    customer_id: Optional[str] = Field(default=None, alias="customerId")
+    feature: str | None = None
+    customer_id: str | None = Field(default=None, alias="customerId")
     input_tokens: int = Field(..., ge=0, alias="inputTokens")
     output_tokens: int = Field(..., ge=0, alias="outputTokens")
-    latency_ms: Optional[int] = Field(default=None, alias="latencyMs")
-    metadata: Optional[Dict[str, Any]] = None
+    latency_ms: int | None = Field(default=None, alias="latencyMs")
+    metadata: dict[str, Any] | None = None
 
 
 class TrackResponse(BaseModel):

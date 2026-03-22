@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
+from typing import Any
 
 
 class BaseProvider(ABC):
@@ -20,7 +20,7 @@ class BaseProvider(ABC):
         ...
 
     @abstractmethod
-    def extract_usage(self, response: Any) -> Tuple[int, int]:
+    def extract_usage(self, response: Any) -> tuple[int, int]:
         """Extract (input_tokens, output_tokens) from a provider response."""
         ...
 
