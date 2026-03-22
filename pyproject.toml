@@ -41,6 +41,9 @@ dev = [
     "respx",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/modelcost"]
+
 [project.urls]
 Homepage = "https://modelcost.ai"
 Documentation = "https://modelcost.ai/docs"
