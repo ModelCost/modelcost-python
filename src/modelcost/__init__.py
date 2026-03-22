@@ -66,6 +66,13 @@ class _ModelCostSDK:
     def __init__(self, config: ModelCostConfig) -> None:
         self.config = config
         self.client = ModelCostClient(config)
+
+        # Synchronous pricing sync before anything uses calculateCost
+        try:
+            sync_pricing_from_api(self.client)
+        except Exception:
+            logger.warning("Failed to sync pricing on init; cost estimates unavailable until next sync")
+
         self.tracker = CostTracker(
             api_key=config.api_key,
             batch_size=config.flush_batch_size,

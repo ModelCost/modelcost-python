@@ -1,17 +1,14 @@
-"""Cost tracker with local pricing table, buffered recording, and a decorator."""
+"""Cost tracker with server-synced pricing table, buffered recording, and a decorator."""
 
 from __future__ import annotations
 
 import functools
-import json
 import logging
 import threading
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
 
-from modelcost.models.cost import ModelPricing
 from modelcost.models.track import TrackRequest, TrackResponse
 
 if TYPE_CHECKING:
@@ -23,56 +20,12 @@ logger = logging.getLogger("modelcost")
 F = TypeVar("F", bound=Callable[..., Any])
 
 # ---------------------------------------------------------------------------
-# Pricing table — loaded from sdk/common/model_pricing.json at import time,
-# refreshed at runtime via GET /api/v1/pricing/models.
+# Pricing table — populated at runtime via GET /api/v1/pricing/models.
+# Starts empty; filled by sync_pricing_from_api() on SDK init and
+# periodically by the background sync timer.
 # ---------------------------------------------------------------------------
 
-_PRICING_JSON_PATHS = [
-    Path(__file__).resolve().parents[4] / "common" / "model_pricing.json",  # sdk/python/src/modelcost -> sdk/common
-    Path(__file__).resolve().parents[5] / "sdk" / "common" / "model_pricing.json",  # alternative layout
-]
-
-
-def _load_bundled_pricing() -> dict[str, ModelPricing]:
-    """Load pricing from the shared model_pricing.json file."""
-    for path in _PRICING_JSON_PATHS:
-        if path.exists():
-            try:
-                data = json.loads(path.read_text())
-                models = data.get("models", {})
-                return {
-                    name: ModelPricing(
-                        provider=info["provider"],
-                        input_cost_per_1k=info["input_cost_per_1k"],
-                        output_cost_per_1k=info["output_cost_per_1k"],
-                    )
-                    for name, info in models.items()
-                }
-            except Exception:
-                logger.warning("Failed to load pricing from %s", path, exc_info=True)
-
-    logger.debug("model_pricing.json not found, using hardcoded fallback")
-    return _hardcoded_fallback()
-
-
-def _hardcoded_fallback() -> dict[str, ModelPricing]:
-    """Fallback if model_pricing.json is unavailable."""
-    return {
-        "gpt-4": ModelPricing(provider="openai", input_cost_per_1k=0.03, output_cost_per_1k=0.06),
-        "gpt-4-turbo": ModelPricing(provider="openai", input_cost_per_1k=0.01, output_cost_per_1k=0.03),
-        "gpt-4o": ModelPricing(provider="openai", input_cost_per_1k=0.005, output_cost_per_1k=0.015),
-        "gpt-4o-mini": ModelPricing(provider="openai", input_cost_per_1k=0.00015, output_cost_per_1k=0.0006),
-        "gpt-3.5-turbo": ModelPricing(provider="openai", input_cost_per_1k=0.0015, output_cost_per_1k=0.002),
-        "claude-opus-4": ModelPricing(provider="anthropic", input_cost_per_1k=0.015, output_cost_per_1k=0.075),
-        "claude-sonnet-4": ModelPricing(provider="anthropic", input_cost_per_1k=0.003, output_cost_per_1k=0.015),
-        "claude-haiku-4": ModelPricing(provider="anthropic", input_cost_per_1k=0.00025, output_cost_per_1k=0.00125),
-        "gemini-1.5-pro": ModelPricing(provider="google", input_cost_per_1k=0.00125, output_cost_per_1k=0.005),
-        "gemini-1.5-flash": ModelPricing(provider="google", input_cost_per_1k=0.000075, output_cost_per_1k=0.0003),
-        "gemini-2.0-flash": ModelPricing(provider="google", input_cost_per_1k=0.0001, output_cost_per_1k=0.0004),
-    }
-
-
-MODEL_PRICING: dict[str, ModelPricing] = _load_bundled_pricing()
+MODEL_PRICING: dict = {}
 
 
 def sync_pricing_from_api(client: ModelCostClient) -> None:
@@ -80,6 +33,8 @@ def sync_pricing_from_api(client: ModelCostClient) -> None:
 
     Called on SDK init and periodically by the background sync timer.
     """
+    from modelcost.models.cost import ModelPricing
+
     try:
         resp = client._http.get(f"{client._config.base_url}/api/v1/pricing/models")
         resp.raise_for_status()
