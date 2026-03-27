@@ -259,26 +259,29 @@ class CostTracker:
                 cache_read_tokens = 0
                 usage = getattr(result, "usage", None)
                 if usage is not None:
+                    def _safe_int(val: object) -> int:
+                        return val if isinstance(val, int) else 0
+
                     # Detect provider-specific cache token fields
-                    cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
-                    cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
+                    cache_creation_tokens = _safe_int(getattr(usage, "cache_creation_input_tokens", 0))
+                    cache_read_tokens = _safe_int(getattr(usage, "cache_read_input_tokens", 0))
 
                     # OpenAI: cached tokens in prompt_tokens_details
                     details = getattr(usage, "prompt_tokens_details", None)
-                    if details is not None:
-                        oai_cached = getattr(details, "cached_tokens", 0) or 0
+                    if details is not None and hasattr(details, "cached_tokens"):
+                        oai_cached = _safe_int(getattr(details, "cached_tokens", 0))
                         if oai_cached > 0:
                             cache_read_tokens = oai_cached
 
-                    raw_input = getattr(usage, "prompt_tokens", 0) or getattr(
-                        usage, "input_tokens", 0
+                    raw_input = _safe_int(
+                        getattr(usage, "prompt_tokens", None) or getattr(usage, "input_tokens", 0)
                     )
-                    output_tokens = getattr(usage, "completion_tokens", 0) or getattr(
-                        usage, "output_tokens", 0
+                    output_tokens = _safe_int(
+                        getattr(usage, "completion_tokens", None) or getattr(usage, "output_tokens", 0)
                     )
                     # Subtract cached tokens from input for OpenAI (included in prompt_tokens)
                     # Anthropic already excludes cache tokens from input_tokens
-                    if details is not None and cache_read_tokens > 0:
+                    if cache_read_tokens > 0 and details is not None:
                         input_tokens = max(0, raw_input - cache_read_tokens)
                     else:
                         input_tokens = raw_input

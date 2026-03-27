@@ -74,6 +74,7 @@ select = [
 ignore = [
     "E501",   # line too long (handled by formatter)
     "SIM105", # try-except-pass used intentionally for fire-and-forget
+    "TCH003", # don't move stdlib imports to TYPE_CHECKING (breaks Pydantic runtime)
 ]
 
 [tool.ruff.lint.isort]
