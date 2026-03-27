@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 import time
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import Any, Optional, Tuple
 
+from modelcost.budget import BudgetManager
+from modelcost.client import ModelCostClient
+from modelcost.config import ModelCostConfig
 from modelcost.models.governance import GovernanceSignalRequest
 from modelcost.models.track import TrackRequest
+from modelcost.pii import PiiScanner
 from modelcost.providers.base import BaseProvider
+from modelcost.rate_limiter import TokenBucketRateLimiter
+from modelcost.session import SessionContext
 from modelcost.tracking import CostTracker
-
-if TYPE_CHECKING:
-    from modelcost.budget import BudgetManager
-    from modelcost.client import ModelCostClient
-    from modelcost.config import ModelCostConfig
-    from modelcost.pii import PiiScanner
-    from modelcost.rate_limiter import TokenBucketRateLimiter
-    from modelcost.session import SessionContext
 
 logger = logging.getLogger("modelcost")
 
@@ -32,15 +29,15 @@ class _GoogleModelProxy:
         original_model: Any,
         *,
         mc_client: ModelCostClient,
-        config: ModelCostConfig | None,
+        config: Optional[ModelCostConfig],
         tracker: CostTracker,
-        budget_manager: BudgetManager | None,
-        pii_scanner: PiiScanner | None,
-        rate_limiter: TokenBucketRateLimiter | None,
+        budget_manager: Optional[BudgetManager],
+        pii_scanner: Optional[PiiScanner],
+        rate_limiter: Optional[TokenBucketRateLimiter],
         api_key: str,
-        feature: str | None,
+        feature: Optional[str],
         model_name: str,
-        session: SessionContext | None = None,
+        session: Optional[SessionContext] = None,
     ) -> None:
         self._original = original_model
         self._mc_client = mc_client
@@ -94,7 +91,9 @@ class _GoogleModelProxy:
         elapsed_ms = int((time.monotonic() - start) * 1000)
 
         # 5. Extract usage and record
-        input_tokens, output_tokens = GoogleProvider.extract_usage_static(response)
+        input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens = (
+            GoogleProvider.extract_usage_detailed(response)
+        )
         request = TrackRequest(
             api_key=self._api_key,
             timestamp=datetime.now(timezone.utc),
@@ -103,12 +102,15 @@ class _GoogleModelProxy:
             feature=self._feature,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
+            cache_creation_tokens=cache_creation_tokens if cache_creation_tokens else None,
+            cache_read_tokens=cache_read_tokens if cache_read_tokens else None,
             latency_ms=elapsed_ms,
         )
         self._tracker.record(request)
 
         # 6. Optimistic local spend update
-        cost = CostTracker.calculate_cost(self._model_name, input_tokens, output_tokens)
+        cost = CostTracker.calculate_cost(self._model_name, input_tokens, output_tokens,
+                                          cache_creation_tokens, cache_read_tokens)
         if self._budget_manager is not None:
             self._budget_manager.update_local_spend(self._feature, cost)
 
@@ -129,13 +131,12 @@ class _GoogleModelProxy:
 
         if self._config is not None and self._config.content_privacy:
             # Metadata-only mode: full local classification, never send raw content
-            assert self._pii_scanner is not None
             full_result = self._pii_scanner.full_scan(content)
             if full_result.detected:
                 from datetime import datetime, timezone
 
                 for v in full_result.violations:
-                    with contextlib.suppress(Exception):
+                    try:
                         self._mc_client.report_signal(GovernanceSignalRequest(
                             organization_id=self._config.org_id,
                             violation_type=v.category,
@@ -148,6 +149,8 @@ class _GoogleModelProxy:
                             source="metadata_only",
                             violation_count=1,
                         ))
+                    except Exception:
+                        pass  # fire-and-forget
 
                 raise PiiDetectedError(
                     message="Sensitive content detected and blocked locally (metadata-only mode)",
@@ -176,7 +179,7 @@ class _GoogleModelProxy:
                              "start": v.start, "end": v.end}
                             for v in gov_result.violations
                         ],
-                        redacted_text=gov_result.redacted_text or (self._pii_scanner.redact(content) if self._pii_scanner else content),
+                        redacted_text=gov_result.redacted_text or self._pii_scanner.redact(content),
                     )
 
     def __getattr__(self, name: str) -> Any:
@@ -190,14 +193,14 @@ class GoogleProvider(BaseProvider):
         self,
         mc_client: ModelCostClient,
         tracker: CostTracker,
-        budget_manager: BudgetManager | None = None,
-        pii_scanner: PiiScanner | None = None,
-        rate_limiter: TokenBucketRateLimiter | None = None,
+        budget_manager: Optional[BudgetManager] = None,
+        pii_scanner: Optional[PiiScanner] = None,
+        rate_limiter: Optional[TokenBucketRateLimiter] = None,
         api_key: str = "",
-        feature: str | None = None,
+        feature: Optional[str] = None,
         model_name: str = "gemini-1.5-pro",
-        config: ModelCostConfig | None = None,
-        session: SessionContext | None = None,
+        config: Optional[ModelCostConfig] = None,
+        session: Optional[SessionContext] = None,
     ) -> None:
         self._mc_client = mc_client
         self._tracker = tracker
@@ -226,11 +229,11 @@ class GoogleProvider(BaseProvider):
             session=self._session,
         )
 
-    def extract_usage(self, response: Any) -> tuple[int, int]:
+    def extract_usage(self, response: Any) -> Tuple[int, int]:
         return self.extract_usage_static(response)
 
     @staticmethod
-    def extract_usage_static(response: Any) -> tuple[int, int]:
+    def extract_usage_static(response: Any) -> Tuple[int, int]:
         """Extract token counts from a Google Gemini response."""
         usage_metadata = getattr(response, "usage_metadata", None)
         if usage_metadata is None:
@@ -239,6 +242,22 @@ class GoogleProvider(BaseProvider):
             getattr(usage_metadata, "prompt_token_count", 0) or 0,
             getattr(usage_metadata, "candidates_token_count", 0) or 0,
         )
+
+    @staticmethod
+    def extract_usage_detailed(response: Any) -> Tuple[int, int, int, int]:
+        """Extract detailed token counts including cached tokens.
+
+        Returns (input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens).
+        Google's prompt_token_count includes cached tokens — subtract to get regular-rate input.
+        """
+        usage_metadata = getattr(response, "usage_metadata", None)
+        if usage_metadata is None:
+            return (0, 0, 0, 0)
+        prompt_tokens = getattr(usage_metadata, "prompt_token_count", 0) or 0
+        output_tokens = getattr(usage_metadata, "candidates_token_count", 0) or 0
+        cached = getattr(usage_metadata, "cached_content_token_count", 0) or 0
+        regular_input = max(0, prompt_tokens - cached)
+        return (regular_input, output_tokens, 0, cached)
 
     def get_provider_name(self) -> str:
         return "google"
