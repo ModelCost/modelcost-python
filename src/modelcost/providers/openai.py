@@ -132,6 +132,8 @@ class _ChatCompletionsProxy:
         """Enforce governance: metadata-only or standard server-side scanning."""
         from modelcost.exceptions import PiiDetectedError
 
+        assert self._pii_scanner is not None  # caller checks before calling
+
         if self._config is not None and self._config.content_privacy:
             # Metadata-only mode: full local classification, never send raw content
             full_result = self._pii_scanner.full_scan(content)
