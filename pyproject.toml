@@ -72,7 +72,8 @@ select = [
     "TCH",  # flake8-type-checking
 ]
 ignore = [
-    "E501",  # line too long (handled by formatter)
+    "E501",   # line too long (handled by formatter)
+    "SIM105", # try-except-pass used intentionally for fire-and-forget
 ]
 
 [tool.ruff.lint.isort]

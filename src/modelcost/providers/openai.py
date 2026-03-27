@@ -5,18 +5,20 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
-from modelcost.budget import BudgetManager
-from modelcost.client import ModelCostClient
-from modelcost.config import ModelCostConfig
 from modelcost.models.governance import GovernanceSignalRequest
 from modelcost.models.track import TrackRequest
-from modelcost.pii import PiiScanner
 from modelcost.providers.base import BaseProvider
-from modelcost.rate_limiter import TokenBucketRateLimiter
-from modelcost.session import SessionContext
 from modelcost.tracking import CostTracker
+
+if TYPE_CHECKING:
+    from modelcost.budget import BudgetManager
+    from modelcost.client import ModelCostClient
+    from modelcost.config import ModelCostConfig
+    from modelcost.pii import PiiScanner
+    from modelcost.rate_limiter import TokenBucketRateLimiter
+    from modelcost.session import SessionContext
 
 logger = logging.getLogger("modelcost")
 
@@ -29,14 +31,14 @@ class _ChatCompletionsProxy:
         original_completions: Any,
         *,
         mc_client: ModelCostClient,
-        config: Optional[ModelCostConfig],
+        config: ModelCostConfig | None,
         tracker: CostTracker,
-        budget_manager: Optional[BudgetManager],
-        pii_scanner: Optional[PiiScanner],
-        rate_limiter: Optional[TokenBucketRateLimiter],
+        budget_manager: BudgetManager | None,
+        pii_scanner: PiiScanner | None,
+        rate_limiter: TokenBucketRateLimiter | None,
         api_key: str,
-        feature: Optional[str],
-        session: Optional[SessionContext] = None,
+        feature: str | None,
+        session: SessionContext | None = None,
     ) -> None:
         self._original = original_completions
         self._mc_client = mc_client
@@ -217,13 +219,13 @@ class OpenAIProvider(BaseProvider):
         self,
         mc_client: ModelCostClient,
         tracker: CostTracker,
-        budget_manager: Optional[BudgetManager] = None,
-        pii_scanner: Optional[PiiScanner] = None,
-        rate_limiter: Optional[TokenBucketRateLimiter] = None,
+        budget_manager: BudgetManager | None = None,
+        pii_scanner: PiiScanner | None = None,
+        rate_limiter: TokenBucketRateLimiter | None = None,
         api_key: str = "",
-        feature: Optional[str] = None,
-        config: Optional[ModelCostConfig] = None,
-        session: Optional[SessionContext] = None,
+        feature: str | None = None,
+        config: ModelCostConfig | None = None,
+        session: SessionContext | None = None,
     ) -> None:
         self._mc_client = mc_client
         self._tracker = tracker
@@ -252,11 +254,11 @@ class OpenAIProvider(BaseProvider):
         chat_proxy = _ChatProxy(client.chat, completions_proxy)
         return _OpenAIClientProxy(client, chat_proxy)
 
-    def extract_usage(self, response: Any) -> Tuple[int, int]:
+    def extract_usage(self, response: Any) -> tuple[int, int]:
         return self.extract_usage_static(response)
 
     @staticmethod
-    def extract_usage_static(response: Any) -> Tuple[int, int]:
+    def extract_usage_static(response: Any) -> tuple[int, int]:
         """Extract token counts from an OpenAI response."""
         usage = getattr(response, "usage", None)
         if usage is None:
@@ -267,7 +269,7 @@ class OpenAIProvider(BaseProvider):
         )
 
     @staticmethod
-    def extract_usage_detailed(response: Any) -> Tuple[int, int, int, int]:
+    def extract_usage_detailed(response: Any) -> tuple[int, int, int, int]:
         """Extract detailed token counts including cached tokens.
 
         Returns (input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens).

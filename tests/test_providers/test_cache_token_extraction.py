@@ -12,7 +12,6 @@ from modelcost.providers.anthropic import AnthropicProvider
 from modelcost.providers.google import GoogleProvider
 from modelcost.providers.openai import OpenAIProvider
 
-
 # ===================== Anthropic Tests =====================
 
 

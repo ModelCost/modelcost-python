@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class TrackRequest(BaseModel):
@@ -19,14 +21,14 @@ class TrackRequest(BaseModel):
     timestamp: datetime
     provider: str
     model: str
-    feature: Optional[str] = None
-    customer_id: Optional[str] = Field(default=None, alias="customerId")
+    feature: str | None = None
+    customer_id: str | None = Field(default=None, alias="customerId")
     input_tokens: int = Field(..., ge=0, alias="inputTokens")
     output_tokens: int = Field(..., ge=0, alias="outputTokens")
-    cache_creation_tokens: Optional[int] = Field(default=None, ge=0, alias="cacheCreationTokens")
-    cache_read_tokens: Optional[int] = Field(default=None, ge=0, alias="cacheReadTokens")
-    latency_ms: Optional[int] = Field(default=None, alias="latencyMs")
-    metadata: Optional[Dict[str, Any]] = None
+    cache_creation_tokens: int | None = Field(default=None, ge=0, alias="cacheCreationTokens")
+    cache_read_tokens: int | None = Field(default=None, ge=0, alias="cacheReadTokens")
+    latency_ms: int | None = Field(default=None, alias="latencyMs")
+    metadata: dict[str, Any] | None = None
 
 
 class TrackResponse(BaseModel):
@@ -37,4 +39,4 @@ class TrackResponse(BaseModel):
     }
 
     status: str
-    cost: Optional[float] = None
+    cost: float | None = None

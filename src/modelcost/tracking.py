@@ -9,7 +9,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from modelcost.models.cost import ModelPricing
 from modelcost.models.track import TrackRequest, TrackResponse
@@ -226,9 +226,9 @@ class CostTracker:
         self,
         provider: str,
         model: str,
-        feature: Optional[str] = None,
-        customer_id: Optional[str] = None,
-        session: Optional[SessionContext] = None,
+        feature: str | None = None,
+        customer_id: str | None = None,
+        session: SessionContext | None = None,
     ) -> Callable[[F], F]:
         """Return a decorator that records cost automatically.
 
