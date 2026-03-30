@@ -106,7 +106,8 @@ class ModelCostClient:
         try:
             response = self._http.request(method, path, json=json, params=params)
             if response.status_code >= 400:
-                self._record_failure()
+                if response.status_code >= 500:
+                    self._record_failure()  # only server errors trip circuit breaker
                 body = response.json() if response.content else {}
                 raise ModelCostApiError(
                     message=body.get("message", response.reason_phrase or "Unknown error"),
