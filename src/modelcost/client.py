@@ -47,7 +47,7 @@ class ModelCostClient:
             base_url=config.base_url,
             timeout=5.0,
             headers={
-                "Authorization": f"Bearer {config.api_key}",
+                "X-API-Key": config.api_key,
                 "Content-Type": "application/json",
                 "User-Agent": f"modelcost-python/{__version__}",
             },
@@ -138,8 +138,8 @@ class ModelCostClient:
         try:
             resp = self._request(
                 "POST",
-                "/v1/track",
-                json=request.model_dump(by_alias=True, mode="json"),
+                "/api/v1/track",
+                json=request.model_dump(mode="json"),
             )
             return TrackResponse.model_validate(resp.json())
         except Exception:
@@ -161,7 +161,7 @@ class ModelCostClient:
         if estimated_cost is not None:
             params["estimated_cost"] = estimated_cost
         try:
-            resp = self._request("GET", "/v1/budget/check", params=params)
+            resp = self._request("GET", "/api/v1/budget/check", params=params)
             return BudgetCheckResponse.model_validate(resp.json())
         except Exception:
             if self._config.fail_open:
@@ -174,8 +174,8 @@ class ModelCostClient:
         try:
             resp = self._request(
                 "POST",
-                "/v1/governance/scan",
-                json=request.model_dump(by_alias=True, mode="json"),
+                "/api/v1/governance/scan",
+                json=request.model_dump(mode="json"),
             )
             return GovernanceScanResponse.model_validate(resp.json())
         except Exception:
@@ -189,8 +189,8 @@ class ModelCostClient:
         try:
             self._request(
                 "POST",
-                "/v1/governance/signals",
-                json=request.model_dump(by_alias=True, mode="json"),
+                "/api/v1/governance/signals",
+                json=request.model_dump(mode="json"),
             )
         except Exception:
             logger.warning("report_signal() failed; ignoring (fire-and-forget)")
@@ -198,7 +198,7 @@ class ModelCostClient:
     def get_budget_status(self, org_id: str) -> BudgetStatusResponse:
         """Retrieve the full budget status for an organisation."""
         try:
-            resp = self._request("GET", f"/v1/budget/status/{org_id}")
+            resp = self._request("GET", f"/api/v1/budget/status/{org_id}")
             return BudgetStatusResponse.model_validate(resp.json())
         except Exception:
             if self._config.fail_open:
@@ -220,8 +220,8 @@ class ModelCostClient:
         try:
             resp = self._request(
                 "POST",
-                "/v1/sessions",
-                json=request.model_dump(by_alias=True, mode="json"),
+                "/api/v1/sessions",
+                json=request.model_dump(mode="json"),
             )
             return CreateSessionResponse.model_validate(resp.json())
         except Exception:
@@ -235,8 +235,8 @@ class ModelCostClient:
         try:
             self._request(
                 "POST",
-                f"/v1/sessions/{server_session_id}/calls",
-                json=request.model_dump(by_alias=True, mode="json"),
+                f"/api/v1/sessions/{server_session_id}/calls",
+                json=request.model_dump(mode="json"),
             )
         except Exception:
             logger.warning("record_session_call() failed; ignoring (fire-and-forget)")
@@ -246,8 +246,8 @@ class ModelCostClient:
         try:
             self._request(
                 "POST",
-                f"/v1/sessions/{server_session_id}/close",
-                json=request.model_dump(by_alias=True, mode="json"),
+                f"/api/v1/sessions/{server_session_id}/close",
+                json=request.model_dump(mode="json"),
             )
         except Exception:
             logger.warning("close_session() failed; ignoring (fire-and-forget)")
