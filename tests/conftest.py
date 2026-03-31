@@ -36,7 +36,7 @@ def mock_client(config: ModelCostConfig) -> respx.MockRouter:
     Usage in tests::
 
         def test_something(mock_client):
-            mock_client.post("/v1/track").respond(200, json={"status": "ok"})
+            mock_client.post("/api/v1/track").respond(200, json={"status": "ok"})
             ...
     """
     with respx.mock(base_url=config.base_url) as router:

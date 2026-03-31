@@ -31,7 +31,7 @@ class TestTrack:
         mock_client: respx.MockRouter,
         track_response_fixture: dict[str, Any],
     ) -> None:
-        mock_client.post("/v1/track").respond(200, json=track_response_fixture)
+        mock_client.post("/api/v1/track").respond(200, json=track_response_fixture)
 
         req = TrackRequest(
             api_key="mc_test_abc123def456ghi789jkl012mno345pqr678stu901vwx",
@@ -54,7 +54,7 @@ class TestBudgetCheck:
         mock_client: respx.MockRouter,
         budget_check_allowed_fixture: dict[str, Any],
     ) -> None:
-        mock_client.get("/v1/budget/check").respond(200, json=budget_check_allowed_fixture)
+        mock_client.get("/api/v1/budget/check").respond(200, json=budget_check_allowed_fixture)
         resp = mc_client.check_budget("org_test_123", feature="chatbot")
         assert resp.allowed is True
         assert resp.action is None
@@ -65,7 +65,7 @@ class TestBudgetCheck:
         mock_client: respx.MockRouter,
         budget_check_blocked_fixture: dict[str, Any],
     ) -> None:
-        mock_client.get("/v1/budget/check").respond(200, json=budget_check_blocked_fixture)
+        mock_client.get("/api/v1/budget/check").respond(200, json=budget_check_blocked_fixture)
         resp = mc_client.check_budget("org_test_123", feature="chatbot")
         assert resp.allowed is False
         assert resp.action == "block"
@@ -84,7 +84,7 @@ class TestCircuitBreaker:
         config_strict = config.model_copy(update={"fail_open": False})
         client = ModelCostClient(config_strict)
 
-        mock_client.post("/v1/track").respond(500, json={"error": "internal", "message": "boom"})
+        mock_client.post("/api/v1/track").respond(500, json={"error": "internal", "message": "boom"})
 
         req = TrackRequest(
             api_key="mc_test_abc123def456ghi789jkl012mno345pqr678stu901vwx",
@@ -112,7 +112,7 @@ class TestCircuitBreaker:
         mc_client: ModelCostClient,
         mock_client: respx.MockRouter,
     ) -> None:
-        mock_client.post("/v1/track").respond(500, json={"error": "internal", "message": "boom"})
+        mock_client.post("/api/v1/track").respond(500, json={"error": "internal", "message": "boom"})
 
         req = TrackRequest(
             api_key="mc_test_abc123def456ghi789jkl012mno345pqr678stu901vwx",
